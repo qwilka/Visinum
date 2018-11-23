@@ -1,0 +1,95 @@
+import copy
+import json
+import logging
+import os
+
+
+from . import uri, utilities
+
+logger = logging.getLogger(__name__)
+
+
+
+
+default_conf = {
+    "database": {
+        "host": "localhost",
+        "port": 3004,
+        "db": "visinum"
+    },
+    "girder": {
+        "apiUrl": "http://localhost:8080/api/v1",
+        "apiKey": "EdKeaqELS40XIrepHcXZFuLQzrMOGUJOVIeeyR5Z",
+    },
+}
+
+
+def initialize(conf=None):
+    global app_config
+    app_config = {}
+    load_config(default_conf)
+    if conf:
+        load_config(conf)
+    return app_config
+
+
+def load_config(filepath):
+    global app_config
+    _config = {}
+    if isinstance(filepath, str) and os.path.isfile(filepath):
+        try:
+            with open(filepath, 'r') as conf_fh:
+                _config = json.load(conf_fh)
+        except Exception as err: 
+            logger.error("load_config: cannot load config file «%s», failed with error «%s»." % (filepath, err) )
+    elif isinstance(filepath, dict):
+        _config = filepath
+    # elif isinstance(filepath, str):
+    #     try:
+    #         _config = json.loads(filepath)
+    #     except Exception as err: 
+    #         logger.error("load_config: cannot load config string «%s», failed with error «%s»." % (filepath, err) )
+    else:
+        logger.error("load_config: cannot find config file «%s» in directory «%s»" % (filepath, os.getcwd()) )
+    utilities.rupdate(app_config, _config)
+    return app_config
+
+
+
+
+def get_config(*keys):
+    global app_config
+    if not keys:
+        return False
+    _datadict = copy.deepcopy(app_config)
+    for _key in keys:
+        _val = _datadict.get(_key, None)
+        if isinstance(_val, dict):
+            _datadict = _val
+        else:
+            break
+    return _val
+
+
+def get_db_uri(db=None, collection=None, _id=None, vn_uri=None, port=None, **kwargs):
+    _db_uri = get_config("database")
+    _db_uri.update(kwargs)
+    if db:
+        _db_uri["db"] = db
+    if collection:
+        _db_uri["collection"] = collection
+    if port:
+        _db_uri["port"] = port
+    if not _id and vn_uri:
+        _id = uri.string2UUID(vn_uri)
+    if _id:
+        _db_uri["_id"] = _id
+    return _db_uri
+
+
+
+def make_req_url(*paths):
+    apiUrl = app_config["girder"]["apiUrl"] 
+    if apiUrl.endswith("/"):
+        apiUrl = apiUrl[:-1]
+    return apiUrl + "/" + "/".join(paths)

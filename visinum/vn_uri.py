@@ -93,27 +93,36 @@ def make_vn_date(vn_date):
 
 
 def make_vn_URI(vn_ast="", country="", field="", domain="", subdomain="",
-    loc_URI=None, long=None, lat=None, bbox=None, E=None, N=None, KP1=None, KP2=None,
+    vn_loc=None, long=None, lat=None, bbox=None, E=None, N=None, KP1=None, KP2=None,
     date1=None, date2=None,
-    vn_cat=None):
+    vn_cat=None, return_dict=False):
     if not vn_ast:
         vn_ast = make_ast_URI(country, field, domain, subdomain)
         _uri = f"{vn_ast}"
-    if not loc_URI:
-        loc_URI = make_loc_URI(long, lat, bbox, E, N, KP1, KP2)
-    if loc_URI:
-        _uri = f"{_uri}|{loc_URI}"
+    if not vn_loc:
+        vn_loc = make_loc_URI(long, lat, bbox, E, N, KP1, KP2)
+    if vn_loc:
+        _uri = f"{_uri}|{vn_loc}"
     if date1:
         # _d1 = dateutil.parser.isoparse(date1)
         # _d1 = _d1.date().isoformat()
-        _d1 = make_vn_date(date1)
-        _uri = f"{_uri}|{_d1}"
+        vn_date = make_vn_date(date1)
         if date2: # for date range...
             # _d2 = dateutil.parser.isoparse(date2)
             # _d2 = _d2.date().isoformat()
             _d2 = make_vn_date(date2)
-            _uri = f"{_uri}:{_d2}"
+            vn_date = f"{vn_date}:{_d2}"
+        _uri = f"{_uri}|{vn_date}"
     if vn_cat:
         # ?test valid vn_cat
         _uri = f"{_uri}|{vn_cat}"
-    return _uri
+    if return_dict:
+        return {
+            "vn_uri": _uri,
+            "vn_ast": vn_ast,
+            "vn_loc": vn_loc,
+            "vn_date": vn_date,
+            "vn_cat": vn_cat,
+        }
+    else:
+        return _uri

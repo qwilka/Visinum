@@ -43,6 +43,15 @@ def source_files_to_staging(srcdir, srcpatt, stgdir, clobber=True):
 
 
 
+def make_server_path(svr_dirpath, svr_root):
+    root_pp = pathlib.Path(svr_root) 
+    if svr_dirpath.startswith("/"): # convert to relative path, if necessary
+        svr_dirpath = svr_dirpath[1:]
+    dirpath_pp = root_pp / svr_dirpath
+    dirpath_pp.mkdir(mode=0o755, parents=True, exist_ok=True)
+    return dirpath_pp
+
+
 def staging_files_to_server(svr_dirpath, filesList, svr_root, cleanPatt=None):
     root_pp = pathlib.Path(svr_root) 
     if svr_dirpath.startswith("/"): # convert to relative path, if necessary

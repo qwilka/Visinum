@@ -45,3 +45,13 @@ def bbox_union(bbox1, bbox2):
         elif ii >= bbox_len//2 and bbox2[ii]>_bbox[ii]:
             _bbox[ii] = bbox2[ii]      
     return _bbox
+
+
+def bbox_to_bbox_pts(bbox):
+    if len(bbox)==4:
+        return [bbox[:2], bbox[2:]]
+    elif len(bbox)==6:
+        return [bbox[:3], bbox[3:]]
+
+def bbox_pts_to_bbox(bbox):
+    return bbox[0] + bbox[1]

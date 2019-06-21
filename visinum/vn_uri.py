@@ -117,12 +117,16 @@ def make_vn_URI(vn_ast="", country="", field="", domain="", subdomain="",
         # ?test valid vn_cat
         _uri = f"{_uri}|{vn_cat}"
     if return_dict:
+        vn_fname = vn_uri_to_filename(_uri)
+        ast_fname = vn_uri_to_filename(vn_ast)
         return {
             "vn_uri": _uri,
             "vn_ast": vn_ast,
             "vn_loc": vn_loc,
             "vn_date": vn_date,
             "vn_cat": vn_cat,
+            "vn_fname": vn_fname,
+            "ast_fname": ast_fname,
         }
     else:
         return _uri

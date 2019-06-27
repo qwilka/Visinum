@@ -16,7 +16,33 @@ from .bbox_operations import bbox_union
 
 
 
-def geojsonFeature_to_FC(geojFeatureFiles, fc_path, bbox=False, props=None):
+def geojsonFeature_to_FC(srcdir, fc_fpath, srcpatt="*.geojson", bbox=False, props=None):
+    _Featurelist = []
+    if bbox:
+        bbox_fc = [float("Inf"), float("Inf"), -float("Inf"), -float("Inf")]
+    srcdir_pp = pathlib.Path(srcdir)
+    geojList = list( srcdir_pp.glob(srcpatt) )
+    for geojFFile in geojList:
+        _pp = pathlib.Path(geojFFile)
+        with _pp.open() as fh:
+            _Feature = geojson.load(fh)
+        if props and isinstance(props, dict):
+            _Feature.properties.update(props)
+        if bbox and "bbox" in _Feature.properties:
+            bbox_fc = bbox_union(bbox_fc, _Feature.properties["bbox"])
+        _Featurelist.append(_Feature)
+    _FC = geojson.FeatureCollection(_Featurelist)
+    if bbox and bbox_fc[0] != float("Inf"):
+        _FC["bbox"] = bbox_fc
+    _pp = pathlib.Path(fc_fpath)
+    if not _pp.is_absolute():
+        _pp = srcdir_pp / _pp
+    with _pp.open(mode='w') as fh:
+        geojson.dump(_FC, fh)
+    return True
+
+
+def geojsonFeature_to_FC2(geojFeatureFiles, fc_path, bbox=False, props=None):
     _Featurelist = []
     if bbox:
         bbox_fc = [float("Inf"), float("Inf"), -float("Inf"), -float("Inf")]
@@ -64,7 +90,7 @@ def points_change_projection(point, sourceEPSG, targetEPSG="EPSG:4326"):
         _pointsList = point  # NOTE should check if list/tuple contents are points!
         _single_point = False
     else:
-        logger.error("points_change_projection: point not correctly specified: %s" % (str(point),) )
+        logger.error("points_change_projection: point not correctly specified: %s" % (str(point)[:100],) )
         return False 
     # https://pcjericks.github.io/py-gdalogr-cookbook/projection.html#create-projection
     _source = osr.SpatialReference()

@@ -52,6 +52,35 @@ def preclean_files(dir, patt):
     return delList
 
 
+def is_staged_dir(stgdir, stgroot):
+    stgdir_pp = pathlib.Path(stgdir)
+    stgroot_pp = pathlib.Path(stgroot)
+    if stgdir_pp==stgroot_pp:
+        return False
+    if not stgdir_pp.is_dir():
+        return False
+    try:
+        stgdir_pp.relative_to(stgroot_pp)
+    except ValueError:
+        return False
+    return True
+
+
+def srcdir_to_staging(srcdir, stgroot, srcpatt=None, preclean=False):
+    srcdir_pp = pathlib.Path(srcdir)
+    stgroot_pp = pathlib.Path(stgroot)
+    if not srcdir_pp.is_dir():  #  or not stgroot_pp.is_dir()
+        logger.error("srcdir_to_staging: args not correctly specified: srcdir=«%s» stgdir=«%s»" % (srcdir, stgroot))
+        return False
+    stgdir = stgroot_pp / srcdir_pp.name
+    if preclean and is_staged_dir(stgdir, stgroot):
+        logger.info("srcdir_to_staging: preclean «%s»" % (stgdir, ))
+        shutil.rmtree(stgdir, ignore_errors=True)
+    dst = shutil.copytree(srcdir_pp, stgdir)
+    return dst
+
+
+
 def source_files_to_staging(srcdir, srcpatt, stgdir, preclean=False, 
     clobber=True, includezip=False, zippatt=None):
     srcdir_pp = pathlib.Path(srcdir)

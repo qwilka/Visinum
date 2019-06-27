@@ -4,15 +4,65 @@ import re
 import dateutil.parser  # https://stackoverflow.com/questions/23385003/attributeerror-when-using-import-dateutil-and-dateutil-parser-parse-but-no
 
 
-def vn_uri_to_filename(vn_uri):
-    # uriFname = uri
-    # uriFname = uriFname.replace(" ", "")
-    # uriFname = uriFname.replace("-", "")
-    # uriFname = uriFname.replace("_", "")
-    # uriFname = uriFname.replace("|", "_")
-    # uriFname = uriFname.replace(":", "-")
+class VnUriFrag:
+    def __init__(self, unhyphen=False):
+        self.unhyphen = unhyphen
+    def __get__(self, instance, owner):
+        return instance.__dict__.get(self.name, None)
+    def __set__(self, instance, value):
+        instance.__dict__[self.name] = value
+        _val = str(value).replace(" ","").upper()
+        if self.unhyphen:
+            _val = _val.replace("-","")
+        instance.__dict__["_"+self.name] = _val
+    def __set_name__(self, owner, name):
+        self.name = name    
+
+
+class VnUri:
+    country = VnUriFrag(unhyphen=True)
+    field = VnUriFrag(unhyphen=True)
+    tag = VnUriFrag(unhyphen=True)
+    subtag = VnUriFrag(unhyphen=True)
+
+    def __init__(self, country, field, tag, subtag=None):
+        self.country = country
+        self.field = field
+        self.tag = tag
+        if subtag:
+            self.subtag = subtag
+        self.sep1 = "|"
+        self.sep2 = ":"
+        self.make_uri()
+
+
+    def make_uri(self):
+        self.make_ast_uri()
+
+    def make_ast_uri(self):
+        ast_uri = f"{self._country}{self.sep2}{self._field}{self.sep2}{self._tag}"
+        if self.subtag:
+            ast_uri +=  f"{self.sep2}{self._subtag}"
+        self.ast_uri = ast_uri
+        self.ast_uri_fname = self.uri_to_fname(ast_uri)
+        return ast_uri
+
+    @staticmethod
+    def uri_to_fname(uri):
+        # https://docs.python.org/3/library/stdtypes.html#str.maketrans
+        tt_map = {" ":"", "|":"__", ":":"--"}
+        tt = str.maketrans(tt_map)
+        fname = uri.translate(tt)
+        return fname
+
+
+
+def vn_uri_to_filename2(vn_uri, short=False):
     # https://docs.python.org/3/library/stdtypes.html#str.maketrans
-    tt_map = {" ":"", "-":"", "_":"", "|":"_", ":":"-"}
+    if short:
+        tt_map = {" ":"", "-":"", "_":"", "|":"_", ":":"-"}
+    else:
+        tt_map = {" ":"", "|":"__", ":":"--"}
     tt = str.maketrans(tt_map)
     # filename = vn_uri.translate(str.maketrans(tt))
     # preserve minus sign - in loc_URI
@@ -23,6 +73,14 @@ def vn_uri_to_filename(vn_uri):
             continue
         uricomps[ii] = _comp.translate(tt)
     filename = "_".join(uricomps)
+    return filename
+
+
+def vn_uri_to_filename(vn_uri):
+    # https://docs.python.org/3/library/stdtypes.html#str.maketrans
+    tt_map = {" ":"", "|":"__", ":":"--"}
+    tt = str.maketrans(tt_map)
+    filename = vn_uri.translate(tt)
     return filename
 
 
@@ -74,7 +132,7 @@ def make_loc_URI(long=None, lat=None, bbox=None, E=None, N=None,
         return None
 
 
-def make_vn_date(vn_date):
+def make_vn_date(vn_date, short=True):
     _vn_date = vn_date.strip()
     _date = dateutil.parser.isoparse(_vn_date)
     _date = _date.date().isoformat()
@@ -89,7 +147,27 @@ def make_vn_date(vn_date):
             _date = _date[:-3]
         else:
             _date = _date[:-6]
+    if short:
+        _date = _date.replace("-", "")
     return _date
+
+
+# def make_vn_date(vn_date):
+#     """
+#     http://strftime.org/
+#     """
+#     if isinstance(vndate, str):
+#         tt_map = {" ":"", "-":"", "/":"", "\":"", ":":"", ".":""}
+#         tt = str.maketrans(tt_map)
+#         _dstr = vn_date.translate(tt)
+#         if len(_dstr)==4:
+#             _dt = datetime.strptime(_dstr, '%Y')
+#             return _dt.strftime('%Y')
+#         elif len(_dstr)==5 or len(_dstr)==6:
+#             _dt = datetime.strptime(_dstr, '%Y%m')
+#             return _dt.strftime('%Y%m')       
+
+
 
 
 def make_vn_URI(vn_ast="", country="", field="", domain="", subdomain="",

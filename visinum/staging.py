@@ -12,12 +12,20 @@ from .vn_uri import make_vn_URI
 from .metadata import meta_to_vn_metafile
 
 
-def ast_to_stgdir(ast_meta, stgroot=None, meta_file=False):
+def ast_to_stgdir(ast_meta, stgroot=None, ast_roodir=False, meta_file=False):
     _meta = copy.deepcopy(ast_meta)
     _meta.update( make_vn_URI(**ast_meta, return_dict=True) ) 
     ast_fname = _meta["ast_fname"]
     vn_fname = _meta["vn_fname"]
-    _meta["stg_rpath"] = f"{ast_fname}/{vn_fname}"
+    if ast_roodir:
+        if vn_fname.startswith(ast_fname):
+            _uri = vn_fname[len(ast_fname):]
+        else:
+            _uri = vn_fname
+        _uri = _uri.lstrip("_")
+        _meta["stg_rpath"] = f"{ast_fname}/{_uri}"
+    else:
+        _meta["stg_rpath"] = vn_fname
     if stgroot and os.path.isdir(stgroot):
         stgroot_pp = pathlib.Path(stgroot)
         stgdir_pp = stgroot_pp / _meta["stg_rpath"]

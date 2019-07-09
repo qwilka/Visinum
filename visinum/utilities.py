@@ -1,6 +1,7 @@
 import copy
 import collections
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -22,3 +23,14 @@ def rupdate(target, src):
                 rupdate(target[k], v)
         else:
             target[k] = copy.deepcopy(v)
+
+
+def filepath_valid_test(filePath):
+    # https://stackoverflow.com/questions/9532499/check-whether-a-path-is-valid-in-python-without-creating-a-file-at-the-paths-ta
+    if os.path.exists(filePath):
+        retVal = True
+    elif os.access(os.path.dirname(filePath), os.W_OK):
+        retVal = True
+    else:
+        retVal = False
+    return retVal

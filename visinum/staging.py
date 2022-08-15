@@ -8,7 +8,7 @@ import zipfile
 
 logger = logging.getLogger(__name__)
 
-from .vn_uri import make_vn_URI
+from .vn_uri2 import make_vn_URI
 from .metadata import meta_to_vn_metafile
 
 
